@@ -12,7 +12,7 @@ def clean_text(text):
     return text
 
 # --- 2. LOAD AND CLEAN ---
-pdf_path = "paper.pdf" 
+pdf_path = "paper3.pdf" 
 print(f"1. Loading {pdf_path}...")
 loader = PyPDFLoader(pdf_path)
 pages = loader.load()
