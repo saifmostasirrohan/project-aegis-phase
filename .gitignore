@@ -9,3 +9,4 @@ frontend/__pycache__/
 .pip_install_output.txt
 chroma_db/
 paper.pdf
+*.pdf
