@@ -40,3 +40,5 @@ phase4_research/venv/
 phase4_research/*.db
 phase4_research/chroma_db/
 phase4_research/__pycache__/
+phase4_research/multiagent_venv/
+phase4_research/crewai_storage/
