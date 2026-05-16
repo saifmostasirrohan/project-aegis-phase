@@ -1,4 +1,8 @@
 .env
+*.env
+**/.env
+!.env.example
+!.env*.example
 
 # AI Model Weights
 *.gguf
@@ -13,8 +17,11 @@ runs/
 # Python Caches
 venv/
 env/
+.python-version
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 backend/__pycache__/
 frontend/__pycache__/
 
@@ -26,3 +33,10 @@ frontend/__pycache__/
 chroma_db/
 paper.pdf
 *.pdf
+*.log
+
+# Phase 4 Agent Environments & Databases
+phase4_research/venv/
+phase4_research/*.db
+phase4_research/chroma_db/
+phase4_research/__pycache__/
