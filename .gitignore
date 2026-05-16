@@ -1,8 +1,24 @@
 .env
+
+# AI Model Weights
+*.gguf
+*.bin
+*.pth
+*.safetensors
+
+# Training Outputs & Checkpoints
+outputs/
+runs/
+
+# Python Caches
 venv/
+env/
 __pycache__/
+*.pyc
 backend/__pycache__/
 frontend/__pycache__/
+
+# Local Data & Generated Files
 *.db
 .DS_Store
 .venv/
