@@ -1,5 +1,4 @@
 from llama_cpp import Llama
-import json
 
 # 1. Boot up the Aegis-Med Engine
 print("Booting Aegis-Med AI Core...")
