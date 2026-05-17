@@ -1,67 +1,177 @@
-# Project Aegis: Agronomy Assistant (Phase 1)
+# Project Aegis
 
-Project Aegis is a stateful, microservice-based AI assistant designed to provide accurate crop pathology intelligence. Phase 1 establishes the core architecture, enforcing strict data contracts and persistent memory before scaling to RAG and Agentic workflows.
+Project Aegis is a staged AI assistant project that grows from a structured agronomy assistant into an autonomous research assistant. The repository now includes FastAPI services, Streamlit interfaces, LangGraph workflows, MCP tools, persistent memory, evaluation, observability, and human-in-the-loop research drafting.
 
-## 🏗️ Architecture
+## Current Highlights
 
-- **Backend:** FastAPI (Python), handling strict validation via Pydantic.
-- **Database:** SQLite with asynchronous SQLAlchemy ORM for conversational state persistence.
-- **LLM Engine:** Groq API (Llama 3), controlled via rigid system prompting.
-- **Frontend:** Streamlit, fully decoupled from the LLM and database.
+- **Phase 1 Agronomy Assistant:** FastAPI + Streamlit crop pathology assistant with SQLite-backed conversation memory.
+- **Phase 4 Research Capstone:** Autonomous literature review assistant using MCP tools, LangGraph orchestration, FastAPI background jobs, and Streamlit approval UI.
+- **Persistent Memory:** User profile memory plus Chroma-backed episodic memory experiments.
+- **Evaluation & Observability:** LangSmith LLM-as-judge evaluation, Prometheus metrics, retries, and circuit breaker demos.
+- **Secret Safety:** `.env`, local databases, virtual environments, Chroma stores, and model weights are ignored.
 
-## 🚀 Setup Instructions
+## Repository Map
 
-1. **Clone the repository:**
-   ```bash
-   git clone [your-repo-url]
-   cd project_aegis_phase1
-   ```
+```text
+Project Aegis/
+├── backend/                    # Phase 1 FastAPI backend
+├── frontend/                   # Phase 1 Streamlit frontend
+├── phase4_research/
+│   ├── cp01_manual_agent.py
+│   ├── cp02_langchain_agent.py
+│   ├── cp03_langgraph_agent.py
+│   ├── cp04_crewai.py
+│   ├── cp04_autogen.py
+│   ├── cp05_memory_agent.py
+│   ├── cp06_mcp_server.py
+│   ├── cp07_evaluator.py
+│   ├── cp07_metrics.py
+│   ├── cp07_resiliency.py
+│   └── capstone/
+│       ├── mcp_client.py       # LangChain MCP adapter tools
+│       ├── agent.py            # LangGraph research state machine
+│       ├── api.py              # FastAPI backend for long-running research
+│       └── app.py              # Streamlit dashboard
+├── .env.example
+├── requirements.txt
+└── start-all.ps1
+```
 
-2. **Create and activate virtual environment (Windows PowerShell):**
-   ```powershell
-   python -m venv .venv
-   (Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned)
-   .\.venv\Scripts\Activate.ps1
-   ```
+## Environment Variables
 
-3. **Install dependencies:**
-   ```powershell
-   pip install -r requirements.txt
-   ```
+Create local `.env` files from `.env.example`. Never commit real keys.
 
-4. **Create environment file:**
-   - Create `.env` in the project root and add:
-   ```env
-   GROQ_API_KEY=your_actual_api_key_here
-   ```
+```env
+GROQ_API_KEY=your_groq_key_here
+LANGCHAIN_TRACING_V2=true
+LANGCHAIN_API_KEY=your_langsmith_key_here
+LANGCHAIN_PROJECT=Phase4_Research_Agent
+AEGIS_API_BASE_URL=http://127.0.0.1:8001
+```
 
-5. **Run the full stack (recommended, PowerShell):**
-   ```powershell
-   .\start-all.ps1
-   ```
-   This launches:
-   - Backend API: `http://127.0.0.1:8001`
-   - Frontend UI: `http://localhost:8501`
+## Phase 1: Agronomy Assistant
 
-6. **Manual startup (alternative):**
-   - Terminal 1 (backend):
-   ```powershell
-   .\start-backend.ps1
-   ```
-   - Terminal 2 (frontend):
-   ```powershell
-   .\start-frontend.ps1
-   ```
+### Setup
 
-## 🔎 API Endpoints
+```powershell
+cd "E:\AI Development\Project Aegis"
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
 
-- `GET /health` - Service health check.
-- `POST /diagnose` - Structured crop pathology classification.
-- `POST /chat` - Stateful conversational endpoint with SQLite-backed memory.
+### Run
 
-## 🧠 Phase 1 Highlights
+```powershell
+.\start-all.ps1
+```
 
-- Strict request/response contracts via Pydantic.
-- JSON-safe LLM prompt constraints for backend reliability.
-- Persistent chat memory surviving process restarts.
-- Clean service separation between frontend, backend, and storage layers.
+Default services:
+
+- Backend API: `http://127.0.0.1:8001`
+- Frontend UI: `http://localhost:8501`
+
+## Phase 4: Research Capstone
+
+The capstone is an autonomous literature review assistant. It searches ArXiv through a local MCP server, fetches paper metadata, compares findings against the local Chroma publication database, pauses for human approval, and writes a Markdown literature review.
+
+### Install
+
+Use the primary Phase 4 environment:
+
+```powershell
+cd "E:\AI Development\Project Aegis\phase4_research"
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+### Run The Capstone
+
+Terminal 1, FastAPI backend:
+
+```powershell
+cd "E:\AI Development\Project Aegis\phase4_research"
+.\venv\Scripts\Activate.ps1
+uvicorn capstone.api:app --reload --port 8001
+```
+
+Terminal 2, Streamlit frontend:
+
+```powershell
+cd "E:\AI Development\Project Aegis\phase4_research"
+.\venv\Scripts\Activate.ps1
+streamlit run .\capstone\app.py
+```
+
+Open:
+
+- API docs: `http://127.0.0.1:8001/docs`
+- UI: `http://localhost:8501`
+
+Expected API routes:
+
+- `POST /research` - Start a background research job and return a `thread_id`.
+- `GET /status/{thread_id}` - Check current node, paper count, approval state, and final review.
+- `POST /approve/{thread_id}` - Resume the graph after the human review pause.
+
+### MCP Server
+
+Run the CP-06 MCP server directly:
+
+```powershell
+cd "E:\AI Development\Project Aegis\phase4_research"
+.\venv\Scripts\Activate.ps1
+python .\cp06_mcp_server.py
+```
+
+Test with MCP Inspector:
+
+```powershell
+npx @modelcontextprotocol/inspector python cp06_mcp_server.py
+```
+
+The server exposes:
+
+- `arxiv_search`
+- `fetch_paper`
+- `search_my_papers`
+- `papers://list`
+
+## Evaluation And Observability
+
+LangSmith evaluation:
+
+```powershell
+cd "E:\AI Development\Project Aegis\phase4_research"
+.\venv\Scripts\Activate.ps1
+python .\cp07_evaluator.py
+```
+
+Prometheus metrics demo:
+
+```powershell
+uvicorn cp07_metrics:app --reload
+```
+
+Open:
+
+- `http://127.0.0.1:8000/research?query=MicroHybridNet`
+- `http://127.0.0.1:8000/metrics`
+
+Resiliency demo:
+
+```powershell
+python .\cp07_resiliency.py
+```
+
+## Development Notes
+
+- Use `phase4_research\venv` for LangChain, LangGraph, MCP, memory, metrics, and capstone work.
+- Use `phase4_research\multiagent_venv` for CrewAI and AutoGen experiments.
+- Runtime state such as `.env`, `chroma_db/`, `user_profile.json`, `research.db`, and virtual environments should stay local.
+- The capstone currently uses placeholder PDF extraction unless a PDF URL is available; `pypdf` support is wired for future full-text extraction.
+
+## Safety
+
+This repository contains research prototypes. Outputs should be reviewed before being used for medical, clinical, agronomic, financial, or operational decisions.
