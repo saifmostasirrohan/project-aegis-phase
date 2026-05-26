@@ -26,7 +26,8 @@ def invoke_free_backup_fallback(prompt: str) -> str:
             temperature=FALLBACK_TEMPERATURE,
         )
         response = fallback_llm.invoke(prompt)
-        return response.content
+        content = response.content
+        return content if isinstance(content, str) else str(content)
     except Exception as exc:
         logger.error(
             "free_fallback_pipeline_exhausted",
