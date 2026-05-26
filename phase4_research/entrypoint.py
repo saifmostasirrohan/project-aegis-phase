@@ -37,3 +37,5 @@ except KeyboardInterrupt:
     print("Terminating processes...")
     backend_process.terminate()
     frontend_process.terminate()
+
+# Mock comment to trigger rebuild on HF Space
