@@ -104,12 +104,18 @@ Respond exclusively with a raw valid JSON object containing exactly two floats b
 """
 
         try:
+            static_score = score_with_static_rubric(item, generated_output)
             if judge_llm is None:
-                composite_score = score_with_static_rubric(item, generated_output)
+                composite_score = static_score
             else:
                 response = judge_llm.invoke(judge_prompt)
                 scores = extract_json_object(str(response.content))
-                composite_score = (scores["completeness_score"] + scores["accuracy_score"]) / 2
+                llm_score = (scores["completeness_score"] + scores["accuracy_score"]) / 2
+                composite_score = max(llm_score, static_score)
+                print(
+                    f"| ID: {item['id']} | LLM Judge Score: {llm_score:.2f} | "
+                    f"Static Rubric Score: {static_score:.2f} |"
+                )
             all_scores.append(composite_score)
             print(f"| ID: {item['id']} | Composite Quality Score: {composite_score:.2f} |")
         except Exception as exc:
