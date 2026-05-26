@@ -50,8 +50,8 @@ if LLM_PROVIDER == "VLLM":
     VLLM_URL = os.getenv("VLLM_URL", "http://vllm:8001/v1")
     llm = ChatOpenAI(
         model="meta-llama/Llama-3.1-8B-Instruct",
-        openai_api_key="mock_token_for_cloud_vllm",
-        openai_api_base=VLLM_URL,
+        api_key="mock_token_for_cloud_vllm",
+        base_url=VLLM_URL,
         streaming=True
     )
     logger.info("llm_client_initialized", provider="vllm", target_url=VLLM_URL)
@@ -59,7 +59,7 @@ else:
     # Default sustainable fallback for your local 16GB CPU machine testing loop
     groq_model = os.getenv("AEGIS_GROQ_MODEL", "llama-3.3-70b-versatile")
     llm = ChatGroq(
-        model_name=groq_model,
+        model=groq_model,
         streaming=True
     )
     logger.info("llm_client_initialized", provider="groq", model=groq_model)
