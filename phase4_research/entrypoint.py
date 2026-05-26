@@ -1,7 +1,6 @@
 import subprocess
 import sys
 import time
-import os
 
 print("Starting Aegis FastAPI Backend...")
 backend_process = subprocess.Popen([
