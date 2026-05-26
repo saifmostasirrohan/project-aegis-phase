@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      HF_SPACE_REPO: ${{ vars.HF_SPACE_REPO || 'saif-rohan/project-aegis' }}
     steps:
       - name: Checkout application code
         uses: actions/checkout@v4
@@ -20,14 +21,37 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.workflow_run.head_sha }}
 
+      - name: Ensure Hugging Face Space exists
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          test -n "$HF_TOKEN" || (echo "HF_TOKEN secret is missing" && exit 1)
+          test -n "$HF_SPACE_REPO" || (echo "HF_SPACE_REPO is missing" && exit 1)
+
+          python -m pip install --upgrade huggingface_hub
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+
+          HfApi(token=os.environ["HF_TOKEN"]).create_repo(
+              repo_id=os.environ["HF_SPACE_REPO"],
+              repo_type="space",
+              space_sdk="docker",
+              exist_ok=True,
+              private=False,
+          )
+          PY
+
       - name: Deploy Phase 4 app to Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           test -n "$HF_TOKEN" || (echo "HF_TOKEN secret is missing" && exit 1)
+          test -n "$HF_SPACE_REPO" || (echo "HF_SPACE_REPO is missing" && exit 1)
 
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          git remote add hf "https://saif-rohan:${HF_TOKEN}@huggingface.co/spaces/saif-rohan/project-aegis"
+          git remote add hf "https://oauth2:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}"
 
-          git push --force hf "$(git subtree split --prefix phase4_research HEAD):main"
+          deploy_sha="$(git subtree split --prefix phase4_research HEAD)"
+          git push --force hf "${deploy_sha}:main"
