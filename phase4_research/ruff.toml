@@ -1,0 +1,3 @@
+# Ruff configuration
+[lint]
+ignore = ["E402"]

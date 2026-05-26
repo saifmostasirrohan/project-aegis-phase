@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   api:
     build:
@@ -10,10 +12,8 @@ services:
       - chroma_data:/app/chroma_db
     env_file:
       - .env
-    environment:
-      - AEGIS_RESEARCH_DB=/app/data/research.db
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/metrics/"]
+      test: ["CMD", "curl", "-f", "http://localhost:8000/metrics"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -30,7 +30,31 @@ services:
       api:
         condition: service_healthy
     environment:
-      - AEGIS_API_BASE_URL=http://api:8000
+      - BACKEND_URL=http://api:8000
+
+  vllm:
+    image: vllm/vllm-openai:latest
+    ports:
+      - "8001:8001"
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+    command: >
+      --model meta-llama/Llama-3.1-8B-Instruct
+      --port 8001
+      --gpu-memory-utilization 0.90
+      --max-model-len 4096
+      --enable-prefix-caching
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    # Routes host GPU accelerators directly to the container in cloud spaces.
+    # Docker Desktop on Windows without a GPU will safely pass over this during local test runs.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
   prometheus:
     image: prom/prometheus:latest

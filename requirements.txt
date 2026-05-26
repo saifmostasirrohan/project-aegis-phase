@@ -1,4 +1,4 @@
-﻿aiohappyeyeballs==2.6.1
+aiohappyeyeballs==2.6.1
 aiohttp==3.13.5
 aiosignal==1.4.0
 annotated-doc==0.0.4
@@ -128,6 +128,7 @@ ddgs
 arxiv==3.0.0
 fastapi==0.136.1
 langchain-groq==1.1.2
+langchain-openai
 langchain-mcp-adapters==0.2.2
 langgraph-checkpoint-sqlite==3.1.0
 mcp==1.27.1

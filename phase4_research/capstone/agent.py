@@ -11,6 +11,8 @@ from typing import Annotated, TypedDict
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_groq import ChatGroq
+from langchain_openai import ChatOpenAI
+import structlog
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
@@ -37,13 +39,29 @@ class ResearchState(TypedDict):
     final_review: str
     messages: Annotated[list[BaseMessage], add_messages]
 
+logger = structlog.get_logger()
 
-llm = ChatGroq(
-    model_name=os.getenv("AEGIS_GROQ_MODEL", "llama-3.3-70b-versatile"),
-    temperature=0.2,
-    api_key=os.getenv("GROQ_API_KEY"),
-    streaming=True,
-)
+# Enforce Configuration-Driven Architecture
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "GROQ").upper()
+
+if LLM_PROVIDER == "VLLM":
+    # vLLM exposes an entrypoint that mirrors the OpenAI API schema exactly.
+    # When deployed to a cloud GPU server, this connects to your internal network service container.
+    VLLM_URL = os.getenv("VLLM_URL", "http://vllm:8001/v1")
+    llm = ChatOpenAI(
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        openai_api_key="mock_token_for_cloud_vllm",
+        openai_api_base=VLLM_URL,
+        streaming=True
+    )
+    logger.info("llm_client_initialized", provider="vllm", target_url=VLLM_URL)
+else:
+    # Default sustainable fallback for your local 16GB CPU machine testing loop
+    llm = ChatGroq(
+        model_name="llama-3.3-70b-specdec",
+        streaming=True
+    )
+    logger.info("llm_client_initialized", provider="groq")
 
 
 def _parse_arxiv_results(raw_results: str) -> list[dict]:
