@@ -57,11 +57,12 @@ if LLM_PROVIDER == "VLLM":
     logger.info("llm_client_initialized", provider="vllm", target_url=VLLM_URL)
 else:
     # Default sustainable fallback for your local 16GB CPU machine testing loop
+    groq_model = os.getenv("AEGIS_GROQ_MODEL", "llama-3.3-70b-versatile")
     llm = ChatGroq(
-        model_name="llama-3.3-70b-specdec",
+        model_name=groq_model,
         streaming=True
     )
-    logger.info("llm_client_initialized", provider="groq")
+    logger.info("llm_client_initialized", provider="groq", model=groq_model)
 
 
 def _parse_arxiv_results(raw_results: str) -> list[dict]:

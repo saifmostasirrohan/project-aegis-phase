@@ -1,0 +1,45 @@
+name: Aegis Main CI
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality-assurance:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: phase4_research
+    env:
+      GROQ_API_KEY: mock_key_for_ci_linting
+      AEGIS_API_KEY: mock_key_for_ci_linting
+      AEGIS_GROQ_MODEL: llama-3.3-70b-versatile
+      PYTHONPATH: .
+    steps:
+      - name: Checkout application code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: phase4_research/requirements.txt
+
+      - name: Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff mypy pytest pytest-asyncio httpx
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+
+      - name: Lint with Ruff
+        run: ruff check .
+
+      - name: Type-check with Mypy
+        run: mypy --ignore-missing-imports --explicit-package-bases .
+
+      - name: Run tests
+        run: pytest -v
