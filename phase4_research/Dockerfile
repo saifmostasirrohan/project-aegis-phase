@@ -15,10 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Leverage Layer Caching for backend dependencies
-COPY requirements.txt .
+COPY requirements.backend.txt .
 
 # Force pip to fetch lightweight CPU versions of torch binaries for the backend
-RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.backend.txt
 
 # Create an unprivileged user for runtime security
 RUN mkdir -p /app/data /app/chroma_db \
