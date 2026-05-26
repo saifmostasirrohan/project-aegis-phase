@@ -6,7 +6,7 @@ from typing import Annotated, TypedDict
 
 import chromadb
 from dotenv import load_dotenv
-from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
+from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.tools import tool
 from langchain_groq import ChatGroq
 from langgraph.checkpoint.memory import MemorySaver
