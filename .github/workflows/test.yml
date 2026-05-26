@@ -32,7 +32,7 @@ jobs:
         run: ruff check .
 
       - name: Static Type Annotation Validation (Mypy)
-        run: mypy --ignore-missing-imports .
+        run: mypy --ignore-missing-imports --explicit-package-bases .
 
       - name: Execute Test Suite Baseline (Pytest)
         run: pytest -v
