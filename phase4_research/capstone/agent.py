@@ -27,6 +27,13 @@ from capstone.mcp_client import arxiv_search, fetch_paper, search_my_papers
 
 load_dotenv()
 
+# Enforce fallback mock keys for startup if not provided.
+# These will be overridden by any real secrets configured in the host environment.
+if not os.environ.get("GROQ_API_KEY"):
+    os.environ["GROQ_API_KEY"] = "gsk_mock_key_for_startup_validation_only_12345"
+if not os.environ.get("OPENAI_API_KEY"):
+    os.environ["OPENAI_API_KEY"] = "sk-mock-key-for-startup-validation-only-12345"
+
 CAPSTONE_DIR = Path(__file__).resolve().parent
 RESEARCH_DB = Path(os.getenv("AEGIS_RESEARCH_DB", CAPSTONE_DIR / "research.db"))
 RESEARCH_DB.parent.mkdir(parents=True, exist_ok=True)

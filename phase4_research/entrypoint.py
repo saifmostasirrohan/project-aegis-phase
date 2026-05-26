@@ -1,6 +1,16 @@
+import os
 import subprocess
 import sys
 import time
+
+# Pre-populate fallback mock API keys for validation during import/startup.
+# These will be overridden by any real secrets configured in Hugging Face Space settings.
+if not os.environ.get("GROQ_API_KEY"):
+    print("GROQ_API_KEY not found in environment. Injecting mock key for startup validation.")
+    os.environ["GROQ_API_KEY"] = "gsk_mock_key_for_startup_validation_only_12345"
+if not os.environ.get("OPENAI_API_KEY"):
+    print("OPENAI_API_KEY not found in environment. Injecting mock key for startup validation.")
+    os.environ["OPENAI_API_KEY"] = "sk-mock-key-for-startup-validation-only-12345"
 
 print("Starting Aegis FastAPI Backend...")
 backend_process = subprocess.Popen([
