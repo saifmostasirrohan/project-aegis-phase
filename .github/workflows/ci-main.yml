@@ -28,13 +28,13 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: phase4_research/requirements.txt
+          cache-dependency-path: phase4_research/requirements.backend.txt
 
       - name: Install project dependencies
         run: |
           python -m pip install --upgrade pip
           pip install ruff mypy pytest pytest-asyncio httpx
-          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+          pip install --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.backend.txt
 
       - name: Lint with Ruff
         run: ruff check .
