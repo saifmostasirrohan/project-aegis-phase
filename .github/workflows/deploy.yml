@@ -1,12 +1,15 @@
 name: Continuous Deployment
 
 on:
-  push:
-    branches: [ main, master ]
+  workflow_run:
+    workflows: ["Continuous Integration"]
+    branches: [ main ]
+    types:
+      - completed
 
 jobs:
   ship-to-production:
-    # Strict Quality Gate: This job will only run if the CI pipeline passes completely
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     
     steps:
@@ -30,5 +33,5 @@ jobs:
           # 3. Inject the authorization token explicitly via Git's native HTTP credential config header wrapper
           git config --global http.https://huggingface.co/.extraheader "Authorization: Bearer $HF_TOKEN"
           
-          # 4. Force push the authenticated repository up to Hugging Face
-          git push --force hf master:main
+          # 4. Publish only the Phase 4 app folder as the Hugging Face Space root
+          git push --force hf "$(git subtree split --prefix phase4_research HEAD):main"
