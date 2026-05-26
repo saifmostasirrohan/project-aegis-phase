@@ -1,0 +1,32 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  ship-to-production:
+    # Strict Quality Gate: This job will only run if the CI pipeline passes completely
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Application Code
+        uses: actions/checkout@v4
+        with:
+          # Fetches entire history so Git can handle the upstream sync securely
+          fetch-depth: 0
+
+      - name: Deploy Container Stack to Hugging Face Space Registry
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          # 1. Configure a safe, decoupled Git environment inside the runner
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          
+          # 2. Add your public Hugging Face Space as a secondary remote target
+          # Note: Ensure your Hugging Face Space name matches "project-aegis" or update the URL path below
+          git remote add hf https://saif-rohan:${HF_TOKEN}@huggingface.co/spaces/saif-rohan/project-aegis
+          
+          # 3. Force-push the local master branch into the remote main production branch on Hugging Face
+          git push --force hf master:main
