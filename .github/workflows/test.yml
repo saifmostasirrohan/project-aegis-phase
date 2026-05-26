@@ -9,6 +9,9 @@ on:
 jobs:
   quality-assurance:
     runs-on: ubuntu-latest
+    env:
+      GROQ_API_KEY: mock_key_for_ci_linting
+      AEGIS_API_KEY: mock_key_for_ci_linting
     steps:
       - name: Checkout Application Code
         uses: actions/checkout@v4
