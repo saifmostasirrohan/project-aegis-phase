@@ -29,6 +29,6 @@ USER 1000:1000
 # Copy backend source code with correct file ownership
 COPY --chown=1000:1000 . .
 
-# Expose backend API port
-EXPOSE 8000
-CMD ["uvicorn", "capstone.api:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose port for Hugging Face Spaces routing
+EXPOSE 7860
+CMD ["python", "entrypoint.py"]

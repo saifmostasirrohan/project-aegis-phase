@@ -24,3 +24,5 @@ structlog==25.5.0
 streamlit==1.57.0
 tenacity==9.1.4
 uvicorn==0.34.2
+requests>=2.31.0
+
