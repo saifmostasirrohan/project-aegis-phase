@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-      HF_SPACE_REPO: ${{ vars.HF_SPACE_REPO || 'saif-rohan/project-aegis' }}
+      HF_SPACE_NAME: ${{ vars.HF_SPACE_NAME || 'project-aegis' }}
+      HF_SPACE_REPO: ${{ vars.HF_SPACE_REPO }}
     steps:
       - name: Checkout application code
         uses: actions/checkout@v4
@@ -21,25 +22,48 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Ensure Hugging Face Space exists
+      - name: Resolve Hugging Face deployment target
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           test -n "$HF_TOKEN" || (echo "HF_TOKEN secret is missing" && exit 1)
-          test -n "$HF_SPACE_REPO" || (echo "HF_SPACE_REPO is missing" && exit 1)
 
           python -m pip install --upgrade huggingface_hub
           python - <<'PY'
           import os
+          import sys
           from huggingface_hub import HfApi
+          from huggingface_hub.errors import HfHubHTTPError
 
-          HfApi(token=os.environ["HF_TOKEN"]).create_repo(
-              repo_id=os.environ["HF_SPACE_REPO"],
-              repo_type="space",
-              space_sdk="docker",
-              exist_ok=True,
-              private=False,
-          )
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          account = api.whoami()
+          token_owner = account["name"]
+          requested_repo = os.environ.get("HF_SPACE_REPO", "").strip()
+          fallback_repo = f"{token_owner}/{os.environ.get('HF_SPACE_NAME', 'project-aegis')}"
+
+          for repo_id in [requested_repo, fallback_repo]:
+              if not repo_id:
+                  continue
+              try:
+                  api.create_repo(
+                      repo_id=repo_id,
+                      repo_type="space",
+                      space_sdk="docker",
+                      exist_ok=True,
+                      private=False,
+                  )
+                  with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as env_file:
+                      env_file.write(f"HF_RESOLVED_SPACE_REPO={repo_id}\n")
+                  print(f"Resolved Hugging Face Space: {repo_id}")
+                  break
+              except HfHubHTTPError as exc:
+                  print(f"Could not use Hugging Face Space '{repo_id}': {exc}", file=sys.stderr)
+          else:
+              raise SystemExit(
+                  "Unable to create or access a Hugging Face Space. "
+                  "Check that HF_TOKEN is a Write token and that HF_SPACE_REPO, if set, "
+                  "uses a namespace owned by that token."
+              )
           PY
 
       - name: Deploy Phase 4 app to Hugging Face Space
@@ -47,11 +71,11 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           test -n "$HF_TOKEN" || (echo "HF_TOKEN secret is missing" && exit 1)
-          test -n "$HF_SPACE_REPO" || (echo "HF_SPACE_REPO is missing" && exit 1)
+          test -n "$HF_RESOLVED_SPACE_REPO" || (echo "HF_RESOLVED_SPACE_REPO is missing" && exit 1)
 
           git config --global user.email "actions@github.com"
           git config --global user.name "GitHub Actions"
-          git remote add hf "https://oauth2:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_REPO}"
+          git remote add hf "https://oauth2:${HF_TOKEN}@huggingface.co/spaces/${HF_RESOLVED_SPACE_REPO}"
 
           deploy_sha="$(git subtree split --prefix phase4_research HEAD)"
           git push --force hf "${deploy_sha}:main"
