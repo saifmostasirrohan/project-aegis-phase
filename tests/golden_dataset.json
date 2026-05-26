@@ -1,0 +1,14 @@
+[
+  {
+    "id": "eval_01",
+    "query": "Synthesize the architecture of MicroHybridNet for cellular morphology.",
+    "expected_keywords": ["dual-branch", "cellular morphology", "attention mapping"],
+    "required_sections": ["Methodology", "Dataset", "Key Result", "Limitation"]
+  },
+  {
+    "id": "eval_02",
+    "query": "Review state-of-the-art zero-click surveillanceware detection systems like Pegasus.",
+    "expected_keywords": ["zero-click", "surveillanceware", "PRISMA"],
+    "required_sections": ["Methodology", "Comparison Table"]
+  }
+]

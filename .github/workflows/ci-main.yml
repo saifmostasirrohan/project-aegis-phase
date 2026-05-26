@@ -52,3 +52,10 @@ jobs:
 
       - name: Run tests
         run: pytest -v
+
+      - name: Execute continuous LLM-as-judge evaluation gate
+        working-directory: .
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          AEGIS_JUDGE_MODEL: llama-3.3-70b-versatile
+        run: python tests/evaluator.py

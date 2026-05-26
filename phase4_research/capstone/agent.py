@@ -21,6 +21,7 @@ from pypdf import PdfReader
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from capstone.free_fallback import invoke_free_backup_fallback
 from capstone.mcp_client import arxiv_search, fetch_paper, search_my_papers
 
 
@@ -52,7 +53,7 @@ if LLM_PROVIDER == "VLLM":
         model="meta-llama/Llama-3.1-8B-Instruct",
         api_key="mock_token_for_cloud_vllm",
         base_url=VLLM_URL,
-        streaming=True
+        streaming=True,
     )
     logger.info("llm_client_initialized", provider="vllm", target_url=VLLM_URL)
 else:
@@ -60,7 +61,7 @@ else:
     groq_model = os.getenv("AEGIS_GROQ_MODEL", "llama-3.3-70b-versatile")
     llm = ChatGroq(
         model=groq_model,
-        streaming=True
+        streaming=True,
     )
     logger.info("llm_client_initialized", provider="groq", model=groq_model)
 
@@ -221,10 +222,22 @@ def write_node(state: ResearchState) -> dict:
         )
     )
 
-    response = llm.invoke([system_prompt, user_prompt])
+    try:
+        response = llm.invoke([system_prompt, user_prompt])
+        final_review = response.content
+    except Exception as exc:
+        logger.warning(
+            "primary_llm_failed_triggering_free_failover",
+            provider=LLM_PROVIDER,
+            error=str(exc),
+        )
+        final_review = invoke_free_backup_fallback(
+            f"{system_prompt.content}\n\n{user_prompt.content}"
+        )
+
     return {
-        "final_review": response.content,
-        "messages": [AIMessage(content=response.content)],
+        "final_review": final_review,
+        "messages": [AIMessage(content=final_review)],
     }
 
 

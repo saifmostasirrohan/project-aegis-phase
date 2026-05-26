@@ -18,6 +18,7 @@ from sse_starlette.sse import EventSourceResponse
 import structlog
 
 from capstone.agent import graph, run_research
+from capstone.free_fallback import invoke_free_backup_fallback
 
 
 structlog.configure(
@@ -31,6 +32,7 @@ structlog.configure(
 logger = structlog.get_logger()
 
 app = FastAPI(title="Aegis Capstone API")
+app.state.free_backup_fallback = invoke_free_backup_fallback
 security_scheme = HTTPBearer()
 EXPECTED_KEY = os.getenv("AEGIS_API_KEY")
 limiter = Limiter(key_func=get_remote_address)
