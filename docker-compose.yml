@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - sqlite_data:/app/data
+      - chroma_data:/app/chroma_db
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/metrics"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile.ui
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      - BACKEND_URL=http://api:8000
+
+  vllm:
+    image: vllm/vllm-openai:latest
+    ports:
+      - "8001:8001"
+    environment:
+      - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
+    command: >
+      --model meta-llama/Llama-3.1-8B-Instruct
+      --port 8001
+      --gpu-memory-utilization 0.90
+      --max-model-len 4096
+      --enable-prefix-caching
+    volumes:
+      - ~/.cache/huggingface:/root/.cache/huggingface
+    # Routes host GPU accelerators directly to the container in cloud spaces.
+    # Docker Desktop on Windows without a GPU will safely pass over this during local test runs.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    depends_on:
+      - api
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  sqlite_data:
+  chroma_data:
+  prometheus_data:
+  grafana_data:

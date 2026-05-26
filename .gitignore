@@ -1,0 +1,20 @@
+# Environments
+venv/
+multiagent_venv/
+env/
+.env
+
+# Databases & State
+chroma_db/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Mac/Windows System files
+.DS_Store
+Thumbs.db
