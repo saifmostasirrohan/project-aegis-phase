@@ -8,6 +8,7 @@ import streamlit as st
 
 
 DEFAULT_API_BASE_URL = os.getenv("AEGIS_API_BASE_URL", "http://127.0.0.1:8001")
+AEGIS_API_KEY = os.getenv("AEGIS_API_KEY", "")
 POLL_SECONDS = 2
 
 
@@ -24,15 +25,57 @@ def init_state() -> None:
 
 
 def api_post(path: str, payload: dict | None = None) -> dict:
-    response = requests.post(f"{st.session_state.api_base_url}{path}", json=payload, timeout=30)
+    response = requests.post(
+        f"{st.session_state.api_base_url}{path}",
+        json=payload,
+        headers=auth_headers(),
+        timeout=30,
+    )
     response.raise_for_status()
     return response.json()
+
+
+def auth_headers() -> dict[str, str]:
+    return {"Authorization": f"Bearer {AEGIS_API_KEY}"} if AEGIS_API_KEY else {}
 
 
 def api_get(path: str) -> dict:
     response = requests.get(f"{st.session_state.api_base_url}{path}", timeout=30)
     response.raise_for_status()
     return response.json()
+
+
+def stream_review(thread_id: str):
+    with requests.get(
+        f"{st.session_state.api_base_url}/research/stream/{thread_id}",
+        headers=auth_headers(),
+        stream=True,
+        timeout=120,
+    ) as response:
+        response.raise_for_status()
+
+        event_type = "message"
+        for line in response.iter_lines(decode_unicode=True):
+            if not line:
+                event_type = "message"
+                continue
+
+            if line.startswith("event:"):
+                event_type = line.removeprefix("event:").strip()
+                continue
+
+            if not line.startswith("data:"):
+                continue
+
+            data = line.removeprefix("data:")
+            if data.startswith(" "):
+                data = data[1:]
+            if event_type == "done":
+                break
+            if event_type == "error":
+                raise RuntimeError(data)
+            if data:
+                yield data
 
 
 def progress_label(status: dict) -> str:
@@ -147,12 +190,13 @@ if status:
         st.write("Review the found papers before drafting the literature review.")
         render_papers(status.get("found_papers", []))
 
-        if st.button("Approve & Write Draft", type="primary"):
+        if st.button("Approve & Stream Draft", type="primary"):
             try:
-                api_post(f"/approve/{st.session_state.thread_id}")
-                st.session_state.auto_poll = True
-                st.success("Approved. Writing has resumed.")
-            except requests.RequestException as exc:
+                st.session_state.auto_poll = False
+                st.write_stream(stream_review(st.session_state.thread_id))
+                refresh_status()
+                st.success("Draft complete.")
+            except (requests.RequestException, RuntimeError) as exc:
                 st.error(f"Could not approve research: {exc}")
 
     if status.get("final_review"):

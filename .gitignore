@@ -1,49 +1,99 @@
+# ====================
+# Secrets & Environment
+# ====================
 .env
 *.env
 **/.env
 !.env.example
 !.env*.example
 
-# AI Model Weights
+# ====================
+# AI Model Weights (large binaries)
+# ====================
 *.gguf
 *.bin
 *.pth
 *.safetensors
+*.onnx
 
-# Training Outputs & Checkpoints
+# ====================
+# Training Data & Outputs
+# ====================
+aegis_medical_dataset.jsonl
 outputs/
 runs/
 
-# Python Caches
+# ====================
+# Python
+# ====================
 venv/
+.venv/
 env/
-.python-version
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-backend/__pycache__/
-frontend/__pycache__/
-
-# Local Data & Generated Files
-*.db
-.DS_Store
-.venv/
+*$py.class
+*.egg-info/
+dist/
+build/
+.python-version
 .pip_install_output.txt
+
+# ====================
+# Databases & Vector Stores
+# ====================
+*.db
+*.sqlite
+*.sqlite3
 chroma_db/
-paper.pdf
+agronomy_faiss.index
+
+# ====================
+# PDFs & Large Documents
+# ====================
 *.pdf
+
+# ====================
+# IDE & Editor
+# ====================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ====================
+# OS System Files
+# ====================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ====================
+# Temp & Generated Files
+# ====================
+tempCodeRunnerFile.py
 *.log
 
-# Phase 4 Agent Environments & Databases
+# ====================
+# Phase 4 Specific
+# ====================
 phase4_research/venv/
-phase4_research/*.db
-phase4_research/user_profile.json
-phase4_research/chroma_db/
-phase4_research/__pycache__/
 phase4_research/multiagent_venv/
+phase4_research/__pycache__/
+phase4_research/**/__pycache__/
+phase4_research/chroma_db/
 phase4_research/crewai_storage/
+phase4_research/user_profile.json
+phase4_research/Tokyo_Time.md
+phase4_research/*.db
 phase4_research/**/*.db
 phase4_research/**/*.sqlite
 phase4_research/**/*.sqlite3
-phase4_research/**/__pycache__/
+
+# ====================
+# Node / Tooling
+# ====================
+node_modules/
+.kilo/

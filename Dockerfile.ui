@@ -1,0 +1,21 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+COPY phase4_research/requirements.ui.txt ./requirements.ui.txt
+RUN pip install --no-cache-dir -r requirements.ui.txt
+
+RUN useradd -m appuser
+
+COPY --chown=appuser:appuser phase4_research ./phase4_research
+
+RUN chown -R appuser:appuser /app
+USER appuser
+
+WORKDIR /app/phase4_research
+
+EXPOSE 8501
+CMD ["streamlit", "run", "capstone/app.py", "--server.address", "0.0.0.0", "--server.port", "8501"]

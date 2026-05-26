@@ -25,7 +25,8 @@ from capstone.mcp_client import arxiv_search, fetch_paper, search_my_papers
 load_dotenv()
 
 CAPSTONE_DIR = Path(__file__).resolve().parent
-RESEARCH_DB = CAPSTONE_DIR / "research.db"
+RESEARCH_DB = Path(os.getenv("AEGIS_RESEARCH_DB", CAPSTONE_DIR / "research.db"))
+RESEARCH_DB.parent.mkdir(parents=True, exist_ok=True)
 
 
 class ResearchState(TypedDict):
@@ -38,9 +39,10 @@ class ResearchState(TypedDict):
 
 
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model_name=os.getenv("AEGIS_GROQ_MODEL", "llama-3.3-70b-versatile"),
     temperature=0.2,
     api_key=os.getenv("GROQ_API_KEY"),
+    streaming=True,
 )
 
 

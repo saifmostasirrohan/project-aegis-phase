@@ -1,1 +1,0 @@
-Compute cosine similarity manually: dot(vec1, vec2) / (||vec1|| * ||vec2||).""
