@@ -33,7 +33,7 @@ logger = structlog.get_logger()
 
 app = FastAPI(title="Aegis Capstone API")
 app.state.free_backup_fallback = invoke_free_backup_fallback
-security_scheme = HTTPBearer()
+security_scheme = HTTPBearer(auto_error=False)
 EXPECTED_KEY = os.getenv("AEGIS_API_KEY")
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
@@ -100,15 +100,21 @@ async def log_requests(request: Request, call_next):
     return response
 
 
-def verify_api_key(credentials: HTTPAuthorizationCredentials = Security(security_scheme)) -> str:
+def verify_api_key(credentials: HTTPAuthorizationCredentials | None = Security(security_scheme)) -> str:
     if not EXPECTED_KEY:
         # Fall back gracefully to allow keyless developer execution if unconfigured
         return ""
 
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Access Denied: Missing Aegis Authorization Token.",
+        )
+
     if not secrets.compare_digest(credentials.credentials, EXPECTED_KEY):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access Denied: Invalid or missing Aegis Authorization Token.",
+            detail="Access Denied: Invalid Aegis Authorization Token.",
         )
 
     return credentials.credentials
