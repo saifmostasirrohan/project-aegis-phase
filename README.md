@@ -10,7 +10,7 @@
 ![LangSmith](https://img.shields.io/badge/LangSmith-Evaluation-1C3C3C)
 ![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-E6522C?logo=prometheus&logoColor=white)
 
-Project Aegis is a staged AI assistant system that evolves from a structured agronomy assistant into an autonomous research assistant. The current capstone combines MCP tools, LangGraph orchestration, FastAPI background jobs, Streamlit human approval, Chroma memory, LangSmith evaluation, Prometheus metrics, and retry/circuit-breaker resiliency.
+Project Aegis is an Autonomous Medical Research Assistant designed to accelerate literature reviews, query scientific publications, and compare external research findings against local databases. The system combines MCP tools, LangGraph state-machine orchestration, FastAPI background tasks, Streamlit human-in-the-loop approval, Chroma vector memory, LangSmith evaluation, Prometheus metrics, and robust retry/circuit-breaker resiliency.
 
 ## Table Of Contents
 
@@ -19,30 +19,24 @@ Project Aegis is a staged AI assistant system that evolves from a structured agr
 - [Tech Stack](#tech-stack)
 - [Repository Structure](#repository-structure)
 - [Environment Variables](#environment-variables)
-- [Run Phase 4 Capstone](#run-phase-4-capstone)
-- [Run Phase 1 Assistant](#run-phase-1-assistant)
+- [Run Aegis Research Assistant](#run-aegis-research-assistant)
 - [MCP Server](#mcp-server)
 - [Evaluation And Observability](#evaluation-and-observability)
 - [Security And Git Hygiene](#security-and-git-hygiene)
+- [Hugging Face Spaces Production Deployment](#hugging-face-spaces-production-deployment)
 - [Limitations](#limitations)
 
 ## What It Does
 
-### Phase 1: Agronomy Assistant
+The Aegis Autonomous Research Assistant accelerates medical research by automating literature acquisition and synthesis:
 
-- Provides crop pathology support through a FastAPI backend and Streamlit frontend.
-- Uses structured request and response contracts with Pydantic.
-- Stores conversation state in SQLite.
-
-### Phase 4: Aegis Research Assistant
-
-- Accepts a research topic from a Streamlit dashboard.
-- Starts long-running research jobs through FastAPI background tasks.
-- Uses a LangGraph state machine to search, read, compare, pause, and write.
-- Calls a local MCP server for ArXiv search, paper fetching, and local paper search.
-- Compares external findings against the local Chroma publication database.
-- Pauses before drafting so the user can approve found papers.
-- Produces a final Markdown literature review with a comparison table.
+- **Interactive Dashboard**: Accepts research queries and displays real-time progress via a Streamlit interface.
+- **Asynchronous Execution**: Launches long-running research tasks in the background using FastAPI background tasks.
+- **LangGraph State Machine**: Orchestrates state-driven steps to search, read, compare, pause, and write.
+- **Model Context Protocol (MCP)**: Communicates with a localized tool server to perform ArXiv paper search, metadata fetching, and vector search.
+- **Publication Merging & Comparison**: Queries local Chroma vector database to find Saif's published papers, comparing new external findings against local expertise.
+- **Human-in-the-Loop Approval**: Pauses execution right before writing the final review, enabling the researcher to review, curate, and approve the discovered bibliography.
+- **Real-Time Streaming**: Emits a streamed, structured Markdown literature review containing a comprehensive comparison table (Theme, New Papers, Local Papers, Gaps/Opportunities) and concrete next-step research directions.
 
 ## Architecture
 
@@ -88,25 +82,26 @@ The graph persists state with SQLite checkpointing and pauses before `write_node
 
 ```text
 Project Aegis/
-|-- backend/                         # Phase 1 FastAPI backend
-|-- frontend/                        # Phase 1 Streamlit frontend
 |-- phase4_research/
-|   |-- cp01_manual_agent.py
-|   |-- cp02_langchain_agent.py
-|   |-- cp03_langgraph_agent.py
-|   |-- cp04_crewai.py
-|   |-- cp04_autogen.py
-|   |-- cp05_memory_agent.py
-|   |-- cp06_mcp_server.py
-|   |-- cp07_evaluator.py
-|   |-- cp07_metrics.py
-|   |-- cp07_resiliency.py
-|   |-- requirements.txt
+|   |-- cp01_manual_agent.py          # Checkpoint 1: Hand-built ReAct loop
+|   |-- cp02_langchain_agent.py       # Checkpoint 2: LangChain creation
+|   |-- cp03_langgraph_agent.py       # Checkpoint 3: LangGraph state-machine
+|   |-- cp04_crewai.py                # Checkpoint 4: CrewAI Multi-agent
+|   |-- cp04_autogen.py               # Checkpoint 4: AutoGen Multi-agent
+|   |-- cp05_memory_agent.py          # Checkpoint 5: Semantic & Episodic memory
+|   |-- cp06_mcp_server.py            # Checkpoint 6: FastMCP Server implementation
+|   |-- cp07_evaluator.py             # Checkpoint 7: LangSmith evaluations
+|   |-- cp07_metrics.py               # Checkpoint 7: Prometheus observability
+|   |-- cp07_resiliency.py            # Checkpoint 7: Circuit-breaker & tenacity retries
+|   |-- requirements.txt              # Shared requirements
+|   |-- requirements.backend.txt      # Production backend requirements
+|   |-- entrypoint.py                 # Production Docker multi-process coordinator
 |   `-- capstone/
-|       |-- mcp_client.py            # LangChain MCP adapter tools
-|       |-- agent.py                 # LangGraph research workflow
-|       |-- api.py                   # FastAPI backend
-|       `-- app.py                   # Streamlit dashboard
+|       |-- mcp_client.py             # LangChain MCP adapter tool adapter (Singleton)
+|       |-- agent.py                  # LangGraph research state graph (Mock Key safe)
+|       |-- api.py                    # FastAPI service (SSE streams, optional auth bypass)
+|       |-- app.py                    # Streamlit research dashboard client
+|       `-- free_fallback.py          # Secondary LLM backup failover router
 |-- .env.example
 |-- .gitignore
 |-- requirements.txt
@@ -127,23 +122,38 @@ AEGIS_API_BASE_URL=http://127.0.0.1:8001
 
 Never commit `.env` files.
 
-## Run Phase 4 Capstone
+## Run Aegis Research Assistant
 
-Use the primary Phase 4 environment.
+Navigate to the core research workspace:
 
 ```powershell
 cd "E:\AI Development\Project Aegis\phase4_research"
 python -m venv venv
 .\venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -r requirements.backend.txt
 ```
+
+### Running Locally (Multi-process entrypoint)
+
+To boot both the FastAPI backend and Streamlit dashboard together locally in parallel (just like in production):
+
+```powershell
+python entrypoint.py
+```
+
+Open:
+- Streamlit Dashboard: `http://localhost:7860`
+- FastAPI Backend API: `http://localhost:8000`
+- FastAPI Interactive Docs: `http://localhost:8000/docs`
+
+### Running Manually
 
 Terminal 1, start the FastAPI backend:
 
 ```powershell
 cd "E:\AI Development\Project Aegis\phase4_research"
 .\venv\Scripts\Activate.ps1
-uvicorn capstone.api:app --reload --port 8001
+uvicorn capstone.api:app --reload --port 8000
 ```
 
 Terminal 2, start the Streamlit UI:
@@ -151,36 +161,17 @@ Terminal 2, start the Streamlit UI:
 ```powershell
 cd "E:\AI Development\Project Aegis\phase4_research"
 .\venv\Scripts\Activate.ps1
-streamlit run .\capstone\app.py
+streamlit run .\capstone\app.py --server.port 7860
 ```
 
-Open:
+### Core Research API Routes
 
-- Capstone API docs: `http://127.0.0.1:8001/docs`
-- Capstone UI: `http://localhost:8501`
-
-Expected capstone routes:
-
-| Method | Route | Purpose |
-| --- | --- | --- |
-| `POST` | `/research` | Start a research job and return a `thread_id`. |
-| `GET` | `/status/{thread_id}` | Read graph progress, approval state, and final review. |
-| `POST` | `/approve/{thread_id}` | Resume the graph after human approval. |
-
-## Run Phase 1 Assistant
-
-```powershell
-cd "E:\AI Development\Project Aegis"
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-.\start-all.ps1
-```
-
-Default services:
-
-- Phase 1 backend: `http://127.0.0.1:8001`
-- Phase 1 frontend: `http://localhost:8501`
+| Method | Route | Auth | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/research` | Optional Bearer | Start a background research task and return a `thread_id`. |
+| `GET` | `/status/{thread_id}` | Open | Read graph progress, approval state, and final Markdown review. |
+| `POST` | `/approve/{thread_id}` | Optional Bearer | Approve discovered papers and resume the state graph. |
+| `GET` | `/research/stream/{thread_id}` | Optional Bearer | SSE stream of the real-time Markdown review draft. |
 
 ## MCP Server
 
@@ -285,11 +276,12 @@ To host both the FastAPI backend and Streamlit UI in a single standard Hugging F
 
 ## Status
 
-Phase 4 capstone is complete as a working local prototype:
+The Aegis Autonomous Medical Research Assistant is fully complete, highly optimized, and **deployed in production**:
 
-- MCP server tested with Inspector
-- LangGraph flow tested with SQLite checkpointing
-- FastAPI backend tested through Swagger docs
-- Streamlit UI tested end-to-end
-- LangSmith evaluation pipeline tested
-- Prometheus metrics and resiliency demos implemented
+- **Production deployment**: Unified multi-process Docker container live on Hugging Face Spaces.
+- **Singleton pooling**: Clean, leak-free FastMCP stdio server connection.
+- **Relevance searches**: Rebuilt tool search using Relevance sorting for robust medical queries.
+- **Startup protections**: Integrated mock API-key injection and grace bypass variables.
+- **LangGraph orchestration**: Pause and resume states tested with SQLite checkpointers.
+- **FastAPI backend**: Rate limiting, SSE streams, optional Bearer authentication.
+- **LangSmith pipeline**: Complete QA LLM-as-judge evaluation loop fully validated in CI.
