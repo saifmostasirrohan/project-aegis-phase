@@ -44,11 +44,20 @@ def make_mcp_client() -> MultiServerMCPClient:
     )
 
 
+_global_tools = None
+_global_client = None
+_mcp_lock = asyncio.Lock()
+
+
 async def load_server_tools() -> dict[str, Any]:
-    """Load raw LangChain tools exposed by the CP-06 MCP server."""
-    client = make_mcp_client()
-    tools = await client.get_tools(server_name=SERVER_NAME)
-    return {tool.name: tool for tool in tools}
+    """Load raw LangChain tools exposed by the CP-06 MCP server as a singleton to prevent process leakage."""
+    global _global_tools, _global_client
+    async with _mcp_lock:
+        if _global_tools is None:
+            _global_client = make_mcp_client()
+            tools = await _global_client.get_tools(server_name=SERVER_NAME)
+            _global_tools = {tool.name: tool for tool in tools}
+        return _global_tools
 
 
 async def _call_mcp_tool(tool_name: str, tool_args: dict[str, Any]) -> str:
