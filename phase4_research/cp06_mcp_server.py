@@ -23,7 +23,7 @@ def arxiv_search(query: str, max_results: int = 3) -> str:
         search = arxiv.Search(
             query=query,
             max_results=max_results,
-            sort_by=arxiv.SortCriterion.SubmittedDate,
+            sort_by=arxiv.SortCriterion.Relevance,
         )
 
         results = []
