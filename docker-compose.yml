@@ -30,7 +30,7 @@ services:
       api:
         condition: service_healthy
     environment:
-      - BACKEND_URL=http://api:8000
+      - AEGIS_API_BASE_URL=http://api:8000
 
   vllm:
     image: vllm/vllm-openai:latest

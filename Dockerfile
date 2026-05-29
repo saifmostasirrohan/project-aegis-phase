@@ -15,10 +15,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Leverage Layer Caching for backend dependencies
-COPY requirements.txt .
+COPY requirements.backend.txt .
 
 # Force pip to fetch lightweight CPU versions of torch binaries for the backend
-RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.backend.txt
 
 # Create an unprivileged user for runtime security
 RUN mkdir -p /app/data /app/chroma_db \
@@ -29,6 +29,6 @@ USER 1000:1000
 # Copy backend source code with correct file ownership
 COPY --chown=1000:1000 . .
 
-# Expose backend API port
-EXPOSE 8000
-CMD ["uvicorn", "capstone.api:app", "--host", "0.0.0.0", "--port", "8000"]
+# Expose port for Hugging Face Spaces routing
+EXPOSE 7860
+CMD ["python", "entrypoint.py"]

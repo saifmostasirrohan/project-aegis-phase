@@ -7,7 +7,7 @@ import requests
 import streamlit as st
 
 
-DEFAULT_API_BASE_URL = os.getenv("AEGIS_API_BASE_URL", "http://127.0.0.1:8001")
+DEFAULT_API_BASE_URL = os.getenv("AEGIS_API_BASE_URL", "http://127.0.0.1:8000")
 AEGIS_API_KEY = os.getenv("AEGIS_API_KEY", "")
 POLL_SECONDS = 2
 

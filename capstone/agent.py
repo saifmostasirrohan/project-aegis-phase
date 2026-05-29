@@ -21,10 +21,18 @@ from pypdf import PdfReader
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from capstone.free_fallback import invoke_free_backup_fallback
 from capstone.mcp_client import arxiv_search, fetch_paper, search_my_papers
 
 
 load_dotenv()
+
+# Enforce fallback mock keys for startup if not provided.
+# These will be overridden by any real secrets configured in the host environment.
+if not os.environ.get("GROQ_API_KEY"):
+    os.environ["GROQ_API_KEY"] = "gsk_mock_key_for_startup_validation_only_12345"
+if not os.environ.get("OPENAI_API_KEY"):
+    os.environ["OPENAI_API_KEY"] = "sk-mock-key-for-startup-validation-only-12345"
 
 CAPSTONE_DIR = Path(__file__).resolve().parent
 RESEARCH_DB = Path(os.getenv("AEGIS_RESEARCH_DB", CAPSTONE_DIR / "research.db"))
@@ -50,18 +58,19 @@ if LLM_PROVIDER == "VLLM":
     VLLM_URL = os.getenv("VLLM_URL", "http://vllm:8001/v1")
     llm = ChatOpenAI(
         model="meta-llama/Llama-3.1-8B-Instruct",
-        openai_api_key="mock_token_for_cloud_vllm",
-        openai_api_base=VLLM_URL,
-        streaming=True
+        api_key="mock_token_for_cloud_vllm",
+        base_url=VLLM_URL,
+        streaming=True,
     )
     logger.info("llm_client_initialized", provider="vllm", target_url=VLLM_URL)
 else:
     # Default sustainable fallback for your local 16GB CPU machine testing loop
+    groq_model = os.getenv("AEGIS_GROQ_MODEL", "llama-3.3-70b-versatile")
     llm = ChatGroq(
-        model_name="llama-3.3-70b-specdec",
-        streaming=True
+        model=groq_model,
+        streaming=True,
     )
-    logger.info("llm_client_initialized", provider="groq")
+    logger.info("llm_client_initialized", provider="groq", model=groq_model)
 
 
 def _parse_arxiv_results(raw_results: str) -> list[dict]:
@@ -220,10 +229,22 @@ def write_node(state: ResearchState) -> dict:
         )
     )
 
-    response = llm.invoke([system_prompt, user_prompt])
+    try:
+        response = llm.invoke([system_prompt, user_prompt])
+        final_review = response.content
+    except Exception as exc:
+        logger.warning(
+            "primary_llm_failed_triggering_free_failover",
+            provider=LLM_PROVIDER,
+            error=str(exc),
+        )
+        final_review = invoke_free_backup_fallback(
+            f"{system_prompt.content}\n\n{user_prompt.content}"
+        )
+
     return {
-        "final_review": response.content,
-        "messages": [AIMessage(content=response.content)],
+        "final_review": final_review,
+        "messages": [AIMessage(content=final_review)],
     }
 
 
