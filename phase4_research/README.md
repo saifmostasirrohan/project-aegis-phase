@@ -22,3 +22,4 @@ Streamlit UI → FastAPI Backend → LangGraph State Machine → MCP Server → 
 ## Links
 
 - [Main Repository README](https://github.com/saifmostasirrohan/Project-Aegis-Phase)
+- [Live Hugging Face Space](https://huggingface.co/spaces/saifrohan44/project-aegis)

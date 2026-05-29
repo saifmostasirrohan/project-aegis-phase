@@ -257,6 +257,26 @@ Tracked safely:
 - dependency manifests
 - documentation
 
+## Hugging Face Spaces Production Deployment
+
+The Project Aegis Capstone is fully deployed in a highly resilient, unified **Docker-based Hugging Face Space**:
+
+- **Live URL**: [Project Aegis on Hugging Face Spaces](https://huggingface.co/spaces/saifrohan44/project-aegis)
+
+### Unified Multi-Process Docker Architecture
+
+To host both the FastAPI backend and Streamlit UI in a single standard Hugging Face container, we implemented a custom **Python Entrypoint Coordinator** (`phase4_research/entrypoint.py`):
+1. **Routing Port**: The container exposes port `7860` for public Streamlit web traffic, as required by Hugging Face Spaces.
+2. **Private API**: The FastAPI backend runs silently in the background on localhost (`127.0.0.1:8000`), keeping the API completely private and secure.
+3. **Orchestration**: The coordinator launches both services in parallel, monitors their exit states, and terminates the container gracefully if either service crashes.
+
+### Production Resiliency Upgrades
+
+1. **LLM Startup-Time Crash Protection**: Solved import-time and instantiation-time validation crashes caused by missing host API keys (e.g. `GROQ_API_KEY` or `OPENAI_API_KEY`). The service coordinator and the LangGraph engine dynamically inject fallback mock keys into the environment at startup if keys are not already configured, allowing the application server to start successfully before secrets are set.
+2. **Graceful Bearer Authentication Bypass**: Relaxed `capstone/api.py` to use `HTTPBearer(auto_error=False)` and dynamically bypass key verification if `AEGIS_API_KEY` is unconfigured on the host. This prevents framework-level `401 Unauthorized` errors when no authorization header is sent by the Streamlit frontend, while fully preserving key verification when a token is configured.
+3. **Robust Relevance-based Search**: Modified the ArXiv search tool in the MCP server (`cp06_mcp_server.py`) to query by **Relevance** instead of raw *Submission Date*. This completely resolves a Lucene indexing bug where search queries on diverse/older topics returned `0 papers found`. Any research topic searched now returns matching scientific literature perfectly.
+4. **Singleton Connection Pooling**: Refactored `load_server_tools()` in the MCP client (`capstone/mcp_client.py`) to pool and reuse the MCP stdio connection as a thread-safe and async-safe global singleton. This completely prevents Python subprocess leakage, drops CPU/memory usage inside the container, and eliminates concurrent ChromaDB database locks.
+
 ## Limitations
 
 - The capstone currently fetches paper metadata and includes best-effort PDF extraction hooks. Full production PDF parsing can be expanded later.
